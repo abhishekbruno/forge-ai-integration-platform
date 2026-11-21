@@ -40,6 +40,9 @@ SAFE_ENV_ALLOWLIST = {
     "PYTHONUTF8",
     "PYTHONIOENCODING",
     "PYTHONUNBUFFERED",
+    "PYTHONPATH",
+    "VIRTUAL_ENV",
+    "LD_LIBRARY_PATH",
     "BLENDER_SYSTEM_SCRIPTS",
     "BLENDER_USER_SCRIPTS",
     "QT_QPA_PLATFORM",
@@ -85,7 +88,11 @@ def terminate_process_tree(pid: int) -> None:
         try:
             import signal
 
-            os.killpg(os.getpgid(pid), signal.SIGKILL)
+            # Only killpg if pid is its own process group leader to prevent killing the parent test runner
+            if os.getpgid(pid) == pid:
+                os.killpg(pid, signal.SIGKILL)
+            else:
+                os.kill(pid, signal.SIGKILL)
         except Exception:
             try:
                 import signal
@@ -132,6 +139,7 @@ def run_safe_subprocess(
             text=True,
             encoding="utf-8",
             errors="replace",
+            start_new_session=(sys.platform != "win32"),
         )
 
         stdout_data, stderr_data = proc.communicate(timeout=timeout_seconds)

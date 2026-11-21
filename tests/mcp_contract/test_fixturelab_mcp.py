@@ -1,5 +1,6 @@
 """MCP contract tests for FixtureLab generated server over stdio."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -22,7 +23,12 @@ async def test_fixturelab_mcp_contract(temp_workspace, temp_db):
     client = ProtocolClient(
         command=sys.executable,
         args=[str(launcher)],
-        env={"FORGE_WORKSPACE": str(temp_workspace), "PYTHONUNBUFFERED": "1"},
+        env={
+            "FORGE_WORKSPACE": str(temp_workspace),
+            "PYTHONUNBUFFERED": "1",
+            "PYTHONPATH": os.pathsep.join(sys.path),
+            "PATH": os.environ.get("PATH", ""),
+        },
     )
 
     # 1. Tool discovery

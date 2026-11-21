@@ -1,7 +1,5 @@
 """Headless UI smoke tests for PySide6 application."""
 
-import sys
-
 import pytest
 from PySide6.QtWidgets import QApplication
 
@@ -12,7 +10,7 @@ from forge.ui.main_window import MainWindow
 def qapp():
     app = QApplication.instance()
     if app is None:
-        app = QApplication(sys.argv)
+        app = QApplication(["forge_test"])
     return app
 
 
@@ -46,3 +44,5 @@ def test_ui_instantiation_and_navigation(qapp, temp_workspace):
     assert win.current_theme == "dark"
 
     win.close()
+    win.deleteLater()
+    qapp.processEvents()

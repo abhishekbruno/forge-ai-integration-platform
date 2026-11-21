@@ -55,12 +55,14 @@ jobs:
           ruff format --check .
 
       - name: Run Core Test Suite (Offline)
+        timeout-minutes: 5
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          pytest -m "not blender_live" --cov=forge --cov-report=term-missing --cov-report=xml
+          pytest -v -m "not blender_live" --cov=forge --cov-report=term-missing --cov-report=xml
 
       - name: Run Doctor Diagnostic
+        timeout-minutes: 2
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
