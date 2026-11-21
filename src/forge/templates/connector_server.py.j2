@@ -28,9 +28,10 @@ server = MCPServer(
 )
 
 WORKSPACE_PATH = Path(os.environ.get("FORGE_WORKSPACE", {{ workspace_path_repr }})).resolve()
+DB_PATH_ENV = os.environ.get("FORGE_DB_PATH")
 MANIFEST_DATA = {{ manifest_dict_repr }}
 manifest = IntegrationManifest.model_validate(MANIFEST_DATA)
-gateway = get_execution_gateway()
+gateway = get_execution_gateway(Path(DB_PATH_ENV).resolve() if DB_PATH_ENV else None)
 
 {% for cap in capabilities %}
 {% set props = cap.input_schema.get("properties", {}) %}

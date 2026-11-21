@@ -10,7 +10,7 @@ from forge.domain.project import Build, PackageMetadata
 from forge.events.bus import get_event_bus
 from forge.events.models import EVENT_PACKAGE_EXPORTED, ForgeEvent
 from forge.persistence.audit_journal import AuditJournal
-from forge.persistence.repositories import PackageRepository
+from forge.persistence.repositories import BuildRepository, PackageRepository
 from forge.security.hashes import hash_file
 
 
@@ -18,12 +18,20 @@ class PackageExporter:
     """Exports and verifies standalone distributable ZIP packages of generated connectors."""
 
     def __init__(self, db_path: Path | None = None):
+        self.db_path = db_path
         self.repo = PackageRepository(db_path)
+        self.build_repo = BuildRepository(db_path)
         self.audit_journal = AuditJournal(db_path)
 
-    def export_package(self, build: Build, workspace_path: Path | str) -> PackageMetadata:
+    def export_package(self, build: Build | str, workspace_path: Path | str) -> PackageMetadata:
         """Create a clean, self-contained ZIP archive of the tested build."""
         ws = Path(workspace_path).resolve()
+        if isinstance(build, str):
+            b = self.build_repo.get_by_id(build)
+            if not b:
+                raise ValueError(f"Build ID '{build}' not found.")
+            build = b
+
         build_dir = Path(build.build_dir).resolve()
         if not build_dir.is_dir():
             raise FileNotFoundError(f"Build directory does not exist: {build_dir}")

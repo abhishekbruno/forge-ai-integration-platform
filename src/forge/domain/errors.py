@@ -45,6 +45,14 @@ class SecurityError(ForgeError):
     """Raised when security boundary rules are violated."""
 
 
+class PathSecurityError(SecurityError):
+    """Raised when a path violates security constraints or workspace boundaries."""
+
+
+class PolicyRejectionError(SecurityError):
+    """Raised when an operation is rejected by policy enforcement."""
+
+
 class ValidationSecurityError(SecurityError):
     """Raised when data structure or schema validation fails."""
 

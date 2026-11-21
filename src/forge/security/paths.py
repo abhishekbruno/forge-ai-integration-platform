@@ -5,9 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Sequence
 
-
-class PathSecurityError(Exception):
-    """Raised when a path violates security constraints or workspace boundaries."""
+from forge.domain.errors import PathSecurityError
 
 
 def canonicalize_path(path: str | Path) -> Path:
