@@ -1,0 +1,55 @@
+schema_version: "1.0"
+integration:
+  id: "example.fixturelab"
+  name: "FixtureLab Demo Integration"
+  version: "0.1.0"
+  description: "Reference offline project demonstrating deterministic tool execution and human approvals."
+application:
+  id: "fixturelab"
+  display_name: "FixtureLab Engine"
+  supported_versions: ">=1.0.0"
+adapter:
+  id: "forge.adapters.fixturelab"
+  version: "0.1.0"
+capabilities:
+  - name: "fixturelab_get_status"
+    handler: "fixturelab.get_status"
+    description: "Returns version and total items."
+    risk: "read"
+    input_schema: { type: object, properties: {}, additionalProperties: false }
+    output_schema: { type: object, properties: { status: { type: string }, version: { type: string }, item_count: { type: integer } }, required: [status, version, item_count] }
+  - name: "fixturelab_list_items"
+    handler: "fixturelab.list_items"
+    description: "List items in sandbox."
+    risk: "read"
+    input_schema: { type: object, properties: { limit: { type: integer, default: 50 } }, additionalProperties: false }
+    output_schema: { type: object, properties: { items: { type: array }, total: { type: integer } }, required: [items, total] }
+  - name: "fixturelab_get_item"
+    handler: "fixturelab.get_item"
+    description: "Get item by key."
+    risk: "read"
+    input_schema: { type: object, properties: { item_id: { type: string } }, required: [item_id], additionalProperties: false }
+    output_schema: { type: object, properties: { item: { type: object } }, required: [item] }
+  - name: "fixturelab_create_item"
+    handler: "fixturelab.create_item"
+    description: "Create an item (requires approval)."
+    risk: "write"
+    input_schema: { type: object, properties: { item_id: { type: string }, name: { type: string }, category: { type: string, default: "general" } }, required: [item_id, name], additionalProperties: false }
+    output_schema: { type: object, properties: { success: { type: boolean }, created_id: { type: string }, version: { type: integer } }, required: [success, created_id, version] }
+  - name: "fixturelab_update_item"
+    handler: "fixturelab.update_item"
+    description: "Update an existing item."
+    risk: "write"
+    input_schema: { type: object, properties: { item_id: { type: string }, expected_version: { type: integer }, name: { type: string } }, required: [item_id, expected_version], additionalProperties: false }
+    output_schema: { type: object, properties: { success: { type: boolean }, updated_id: { type: string }, new_version: { type: integer } }, required: [success, updated_id, new_version] }
+  - name: "fixturelab_delete_item"
+    handler: "fixturelab.delete_item"
+    description: "Delete an item."
+    risk: "destructive"
+    input_schema: { type: object, properties: { item_id: { type: string } }, required: [item_id], additionalProperties: false }
+    output_schema: { type: object, properties: { success: { type: boolean }, deleted_id: { type: string } }, required: [success, deleted_id] }
+policy:
+  default: "deny"
+  read_operations: "allow_within_workspace"
+  write_operations: "explicit_approval"
+  network_operations: "deny"

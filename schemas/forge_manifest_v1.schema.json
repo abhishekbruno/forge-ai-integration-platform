@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.local/schemas/forge_manifest_v1.schema.json",
+  "title": "FORGE Integration Manifest v1.0",
+  "description": "Specification for declaring safely exposed capabilities, policies, and adapter bindings in FORGE.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "integration",
+    "application",
+    "adapter",
+    "capabilities",
+    "policy"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "integration": {
+      "type": "object",
+      "required": ["id", "name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+.*$"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "application": {
+      "type": "object",
+      "required": ["id", "display_name", "supported_versions"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supported_versions": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+$"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "handler",
+          "description",
+          "risk",
+          "input_schema",
+          "output_schema"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.-]+$"
+          },
+          "handler": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.-]+$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "risk": {
+            "type": "string",
+            "enum": ["read", "write", "destructive", "external"]
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 600,
+            "default": 45
+          },
+          "input_schema": {
+            "type": "object"
+          },
+          "output_schema": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "default",
+        "read_operations",
+        "write_operations",
+        "network_operations"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": ["deny", "allow"]
+        },
+        "read_operations": {
+          "type": "string",
+          "enum": ["allow_within_workspace", "explicit_approval", "deny"]
+        },
+        "write_operations": {
+          "type": "string",
+          "enum": ["explicit_approval", "deny", "allow_within_workspace"]
+        },
+        "network_operations": {
+          "type": "string",
+          "enum": ["deny", "allow"]
+        }
+      }
+    }
+  }
+}

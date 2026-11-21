@@ -1,0 +1,150 @@
+schema_version: "1.0"
+integration:
+  id: "forge.fixturelab"
+  name: "FixtureLab Reference Suite"
+  version: "0.1.0"
+  description: "Deterministic test application for offline validation of read, write, and destructive operations."
+application:
+  id: "fixturelab"
+  display_name: "FixtureLab Deterministic Engine"
+  supported_versions: ">=1.0.0"
+  website: "https://forge.local/docs/fixturelab"
+adapter:
+  id: "forge.adapters.fixturelab"
+  version: "0.1.0"
+capabilities:
+  - name: "fixturelab_get_status"
+    handler: "fixturelab.get_status"
+    description: "Returns the current version, engine state, and item count of FixtureLab."
+    risk: "read"
+    timeout_seconds: 15
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+    output_schema:
+      type: object
+      properties:
+        status: { type: string }
+        version: { type: string }
+        item_count: { type: integer }
+      required: [status, version, item_count]
+
+  - name: "fixturelab_list_items"
+    handler: "fixturelab.list_items"
+    description: "Returns an ordered list of items and total count from the sandbox."
+    risk: "read"
+    timeout_seconds: 15
+    input_schema:
+      type: object
+      properties:
+        limit: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      additionalProperties: false
+    output_schema:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              category: { type: string }
+              version: { type: integer }
+            required: [id, name, version]
+        total: { type: integer }
+      required: [items, total]
+
+  - name: "fixturelab_get_item"
+    handler: "fixturelab.get_item"
+    description: "Retrieves an identified item by exact key or returns a typed not-found response."
+    risk: "read"
+    timeout_seconds: 15
+    input_schema:
+      type: object
+      properties:
+        item_id: { type: string, minLength: 1 }
+      required: [item_id]
+      additionalProperties: false
+    output_schema:
+      type: object
+      properties:
+        item:
+          type: object
+          properties:
+            id: { type: string }
+            name: { type: string }
+            category: { type: string }
+            payload: { type: object }
+            version: { type: integer }
+          required: [id, name, version]
+      required: [item]
+
+  - name: "fixturelab_create_item"
+    handler: "fixturelab.create_item"
+    description: "Creates a validated new item in the approved sandbox (requires explicit approval)."
+    risk: "write"
+    timeout_seconds: 20
+    input_schema:
+      type: object
+      properties:
+        item_id: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1 }
+        category: { type: string, default: "general" }
+        payload: { type: object, default: {} }
+      required: [item_id, name]
+      additionalProperties: false
+    output_schema:
+      type: object
+      properties:
+        success: { type: boolean }
+        created_id: { type: string }
+        version: { type: integer }
+      required: [success, created_id, version]
+
+  - name: "fixturelab_update_item"
+    handler: "fixturelab.update_item"
+    description: "Updates an existing approved item with optimistic version conflict checking."
+    risk: "write"
+    timeout_seconds: 20
+    input_schema:
+      type: object
+      properties:
+        item_id: { type: string, minLength: 1 }
+        expected_version: { type: integer, minimum: 1 }
+        name: { type: string }
+        payload: { type: object }
+      required: [item_id, expected_version]
+      additionalProperties: false
+    output_schema:
+      type: object
+      properties:
+        success: { type: boolean }
+        updated_id: { type: string }
+        new_version: { type: integer }
+      required: [success, updated_id, new_version]
+
+  - name: "fixturelab_delete_item"
+    handler: "fixturelab.delete_item"
+    description: "Deletes an approved item from the sandbox state (destructive operation)."
+    risk: "destructive"
+    timeout_seconds: 20
+    input_schema:
+      type: object
+      properties:
+        item_id: { type: string, minLength: 1 }
+      required: [item_id]
+      additionalProperties: false
+    output_schema:
+      type: object
+      properties:
+        success: { type: boolean }
+        deleted_id: { type: string }
+      required: [success, deleted_id]
+
+policy:
+  default: "deny"
+  read_operations: "allow_within_workspace"
+  write_operations: "explicit_approval"
+  network_operations: "deny"

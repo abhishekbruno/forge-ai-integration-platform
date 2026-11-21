@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "{{ integration.id }}": {
+      "command": {{ python_executable | tojson }},
+      "args": [
+        {{ launcher_path | tojson }}
+      ],
+      "env": {
+        "FORGE_WORKSPACE": {{ workspace_path | tojson }}
+      }
+    }
+  }
+}

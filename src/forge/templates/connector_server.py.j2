@@ -1,0 +1,93 @@
+"""Generated MCP Server for {{ integration.name }} ({{ integration.id }}).
+
+DO NOT EDIT DIRECTLY. Generated deterministically by FORGE Integration Platform.
+Build ID: {{ build_id }}
+Generated at: {{ generated_at }}
+"""
+
+from __future__ import annotations
+
+import asyncio
+import os
+import sys
+from pathlib import Path
+from typing import Any
+
+from mcp.server import MCPServer
+import mcp.types as types
+
+from forge.core.execution_gateway import get_execution_gateway
+from forge.domain.manifest import IntegrationManifest
+from forge.adapters.registry import get_adapter_registry
+
+# Setup MCPServer v2
+server = MCPServer(
+    name="{{ integration.id }}",
+    version="{{ integration.version }}",
+    description="{{ integration.description | default(integration.name) }}",
+)
+
+WORKSPACE_PATH = Path(os.environ.get("FORGE_WORKSPACE", {{ workspace_path_repr }})).resolve()
+MANIFEST_DATA = {{ manifest_dict_repr }}
+manifest = IntegrationManifest.model_validate(MANIFEST_DATA)
+gateway = get_execution_gateway()
+
+{% for cap in capabilities %}
+{% set props = cap.input_schema.get("properties", {}) %}
+{% set required = cap.input_schema.get("required", []) %}
+@server.tool(
+    name="{{ cap.name }}",
+    description="{{ cap.description }}",
+)
+{% if props %}
+async def {{ cap.name.replace('.', '_').replace('-', '_') }}(
+    {% for prop_name, prop_def in props.items() %}
+    {% if prop_name in required and 'default' not in prop_def %}
+    {{ prop_name }}: Any,
+    {% else %}
+    {{ prop_name }}: Any = {{ prop_def.get('default') | tojson if 'default' in prop_def else 'None' }},
+    {% endif %}
+    {% endfor %}
+) -> dict[str, Any]:
+    """Execute {{ cap.name }} through the FORGE secure policy gateway."""
+    kwargs = {
+        {% for prop_name, prop_def in props.items() %}
+        {% if prop_name in required %}
+        "{{ prop_name }}": {{ prop_name }},
+        {% else %}
+        **({"{{ prop_name }}": {{ prop_name }}} if {{ prop_name }} is not None else {}),
+        {% endif %}
+        {% endfor %}
+    }
+    return gateway.execute_tool(
+        connector_id="{{ integration.id }}",
+        manifest=manifest,
+        tool_name="{{ cap.name }}",
+        args=kwargs,
+        workspace=WORKSPACE_PATH,
+        actor=os.environ.get("MCP_CLIENT_ACTOR", "mcp_client"),
+    )
+{% else %}
+async def {{ cap.name.replace('.', '_').replace('-', '_') }}() -> dict[str, Any]:
+    """Execute {{ cap.name }} through the FORGE secure policy gateway."""
+    return gateway.execute_tool(
+        connector_id="{{ integration.id }}",
+        manifest=manifest,
+        tool_name="{{ cap.name }}",
+        args={},
+        workspace=WORKSPACE_PATH,
+        actor=os.environ.get("MCP_CLIENT_ACTOR", "mcp_client"),
+    )
+{% endif %}
+
+{% endfor %}
+
+def main() -> None:
+    """Run the server using official MCP stdio transport."""
+    # Write diagnostics to stderr only; stdout is reserved for MCP JSON-RPC protocol
+    print(f"Starting MCP Server '{{ integration.id }}' on stdio...", file=sys.stderr)
+    asyncio.run(server.run_stdio_async())
+
+
+if __name__ == "__main__":
+    main()

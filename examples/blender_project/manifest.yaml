@@ -1,0 +1,31 @@
+schema_version: "1.0"
+integration:
+  id: "example.blender"
+  name: "Blender Scene Tools Project"
+  version: "0.1.0"
+  description: "Example project for safe 3D scene inspection and copy-on-write primitive generation."
+application:
+  id: "blender"
+  display_name: "Blender"
+  supported_versions: ">=4.0,<6.0"
+adapter:
+  id: "forge.adapters.blender"
+  version: "0.1.0"
+capabilities:
+  - name: "blender_scene_summary"
+    handler: "blender.scene_summary"
+    description: "Summary of scene objects and metadata."
+    risk: "read"
+    input_schema: { type: object, properties: { blend_file: { type: string } }, required: [blend_file], additionalProperties: false }
+    output_schema: { type: object, properties: { object_count: { type: integer }, object_types: { type: object }, blender_version: { type: string } }, required: [object_count, object_types, blender_version] }
+  - name: "blender_create_primitive"
+    handler: "blender.create_primitive"
+    description: "Create primitive in new copy-on-write file."
+    risk: "write"
+    input_schema: { type: object, properties: { blend_file: { type: string }, output_file: { type: string }, primitive_type: { type: string, enum: ["cube", "sphere", "cylinder", "plane"] }, name: { type: string } }, required: [blend_file, output_file, primitive_type, name], additionalProperties: false }
+    output_schema: { type: object, properties: { success: { type: boolean }, created_name: { type: string }, output_file: { type: string }, source_preserved: { type: boolean } }, required: [success, created_name, output_file, source_preserved] }
+policy:
+  default: "deny"
+  read_operations: "allow_within_workspace"
+  write_operations: "explicit_approval"
+  network_operations: "deny"
